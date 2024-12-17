@@ -245,7 +245,7 @@ public final class FormatBuilder<T> {
         boolean addNext = false;
         boolean isVar   = false;
 
-        for (int cursor = 0, len = chars.length ;cursor < len; cursor++){
+        for(int cursor = 0, len = chars.length ;cursor < len; cursor++){
             char cur = chars[cursor];
             if(addNext){
                 builder.append(cur);
@@ -277,6 +277,14 @@ public final class FormatBuilder<T> {
                 } else
                     builder.append(cur);
             }
+        }
+
+        if(builder.length() > 0){
+            if(isVar)throw new IllegalArgumentException("Invalid format!");
+
+            if(add(entries, pos, builder.toString(), false))
+                ++countItems;
+            ++pos;
         }
 
         for (FEntry entry:entries.values()){

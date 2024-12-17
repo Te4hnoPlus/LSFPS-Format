@@ -30,7 +30,7 @@ public class TestFm {
         FormatBuilder<Examples.User> fmBuilder = new FormatBuilder<>(Examples.User.class)
                 .setProvider(PRO);
 
-        fmBuilder.setFormat("User-%age%: %name%, parent-%parent.age%: %parent/name%");
+        fmBuilder.setFormat("User-%age%: %name%, parent-%parent.age%: %parent/name% <nen>");
 
         Formatter<User> format = fmBuilder.build();
 
