@@ -19,15 +19,58 @@ class User{
     }
 }
 ```
+Если стандартного доступа по полям не достаточно, можно дополнить провайдер своими переменными:
+Переопределим метод `MapVarProvider#init` и зарегистрируем несколько переменных
+
+```java
+@Override
+protected void init() {
+    //в регистрации данных переменных нет прямой необходимости, они создадутся 
+    //и зарегистрируются автоматически, при запросе к полям `name` и `parent`
+    reg("name"  , (IVarGetter.Str<Examples.User>) user -> user.name);
+    reg("parent", new IVarGetter<Examples.User>() {
+        public Object get(User user) {
+            return user.parent;
+        }
+        public Class<?> getType() {
+            return Examples.User.class;
+        }
+    });
+}
+```
+Так же, после создания можно дополнительно регистрировать переменные:
+```java
+PROVIDER.section("func")
+    .reg("has-parent", (IVarGetter.Bool<User>) user -> user.parent != null)
+    .reg("an-adult", (IVarGetter.Bool<User>) user -> user.age >= 18)
+    .back().section("extra")
+    .reg("name-caps", (IVarGetter.Str<User>) user -> user.name.toUpperCase(Locale.ROOT));
+```
+
 После того, как провайдер данных создан, можно приступить к созданию формата.
 Для создания формата используется `FormatBuilder`:
 ```java
 FormatBuilder<User> builder = new FormatBuilder<>(User.class)
     .setProvider(PROVIDER).fixEmpty()
     .setFormat("User-%age%: %name%, parent-%parent.age%: %parent/name%");
-
-Formatter<User> format = fmBuilder.build();
 ```
+При необходимости, можно изменить спец-символы форматирования:
+```java
+builder.setMath('<', '>', '\\');
+```
+
+У FormatBuilder может быть несолько разных провайдеров данных, 
+использование того или иного провайдера будет выбрано автоматически, 
+исходя из типа входного аргумента:
+```java
+builder.setProvider(PROVIDER, PROVIDER2, PROVIDE3 ...);
+```
+
+Теперь можно создать формат
+```java
+Formatter<User> format = builder.build();
+```
+
 После создания, формат уже не может и не должен быть изменен.
 
 Создание формата - процесс тяжелый, 
