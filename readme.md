@@ -63,7 +63,7 @@ builder.setMath('<', '>', '\\');
 использование того или иного провайдера будет выбрано автоматически, 
 исходя из типа входного аргумента:
 ```java
-builder.setProvider(PROVIDER, PROVIDER2, PROVIDE3 ...);
+builder.setProvider(PROVIDER, PROVIDER_2, PROVIDER_3 ...);
 ```
 
 Теперь можно создать формат
