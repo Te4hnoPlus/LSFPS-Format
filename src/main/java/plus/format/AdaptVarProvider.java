@@ -1,23 +1,38 @@
 package plus.format;
 
 
-public abstract class AdaptVarProvider<T,R> implements IVarProvider<T>{
-    protected final IVarProvider<R> parent;
+/**
+ * Adapt var provider`s template for required type
+ * @param <T> input type
+ * @param <P> parent type
+ */
+public abstract class AdaptVarProvider<T, P> implements IVarProvider<T>{
+    protected final IVarProvider<P> parent;
 
-    public AdaptVarProvider(IVarProvider<R> parent) {
+    /**
+     * @param parent parent var provider
+     * @throws IllegalArgumentException if parent is null
+     */
+    public AdaptVarProvider(IVarProvider<P> parent) {
+        if(parent == null)throw new IllegalArgumentException();
         this.parent = parent;
     }
 
 
     @Override
     public IVarGetter<T> getFmGetter(String name) {
-        IVarGetter<R> result = parent.getFmGetter(name);
+        IVarGetter<P> result = parent.getFmGetter(name);
         if(result == null)return null;
         return adapt(result);
     }
 
 
-    public abstract IVarGetter<T> adapt(IVarGetter<R> src);
+    /**
+     * Adapt vargetter
+     * @param src non-null vargetter
+     * @return vargetter of required input
+     */
+    public abstract IVarGetter<T> adapt(IVarGetter<P> src);
 
 
     @Override

@@ -4,9 +4,15 @@ import sun.misc.Unsafe;
 import java.lang.reflect.Field;
 
 
+/**
+ * Unsafe utils to avoid reflection and acceleration
+ */
 public class UnsafeUtils {
+    //the Unsafe instance
     public static final Unsafe UNSAFE;
+    //String`s value offset
     private static final long STR_OFF;
+    //check if String`s value is char[] or byte[] in different JVM`s
     private static final boolean IS_STR_CHARS;
 
     static {
@@ -23,6 +29,14 @@ public class UnsafeUtils {
     }
 
 
+    /**
+     * Fast merge strings, avoiding copy arrays
+     * <br>
+     * The same as <pre>{@code
+     * String.join("", args);
+     * }</pre>
+     * but faster
+     */
     public static String mergeStringsFast(String[] args){
         if(args.length == 1)return args[0];
 
@@ -53,6 +67,9 @@ public class UnsafeUtils {
     }
 
 
+    /**
+     * @return create new string avoiding copy char/byte array
+     */
     private static String stringOf(Object value) {
         try {
             String str = (String) UNSAFE.allocateInstance(String.class);

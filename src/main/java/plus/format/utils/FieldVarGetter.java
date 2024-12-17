@@ -4,16 +4,35 @@ import plus.format.IVarGetter;
 import java.lang.reflect.Field;
 
 
+/**
+ * Field`s vargetter template
+ * <br>
+ * Don`t extend this, see {@link FieldVarGetter#of(Class, Field)}
+ * @param <T> input type
+ */
 public abstract class FieldVarGetter<T> implements IVarGetter<T> {
+    //input type
     final Class<T> inType;
+    //field`s offset
     final long off;
 
+    /**
+     * Don`t call this manually! Use {@link FieldVarGetter#of(Class, Field)}
+     * @param type input type
+     * @param field target field
+     */
     FieldVarGetter(Class<T> type, Field field) {
         this.inType = type;
         off = UnsafeUtils.UNSAFE.objectFieldOffset(field);
     }
 
 
+    /**
+     * Create vargetter from field
+     * @param type input type
+     * @param field target field
+     * @return field`s vargetter instance
+     */
     public static <T> FieldVarGetter<T> of(Class<T> type, Field field){
         Class<?> fType = field.getType();
         if(fType == boolean.class)return new Bool<>(  type, field);
@@ -35,7 +54,8 @@ public abstract class FieldVarGetter<T> implements IVarGetter<T> {
     }
 
 
-    static class Bool<T> extends FieldVarGetter<T>{
+    //Type-specific field getters
+    static final class Bool<T> extends FieldVarGetter<T>{
         Bool(Class<T> type, Field field) {
             super(type, field);
         }
@@ -49,7 +69,7 @@ public abstract class FieldVarGetter<T> implements IVarGetter<T> {
             return boolean.class;
         }
     }
-    static class Byte<T> extends FieldVarGetter<T>{
+    static final class Byte<T> extends FieldVarGetter<T>{
         Byte(Class<T> type, Field field) {
             super(type, field);
         }
@@ -62,7 +82,7 @@ public abstract class FieldVarGetter<T> implements IVarGetter<T> {
             return byte.class;
         }
     }
-    static class Short<T> extends FieldVarGetter<T>{
+    static final class Short<T> extends FieldVarGetter<T>{
         Short(Class<T> type, Field field) {
             super(type, field);
         }
@@ -75,7 +95,7 @@ public abstract class FieldVarGetter<T> implements IVarGetter<T> {
             return short.class;
         }
     }
-    static class Int<T> extends FieldVarGetter<T>{
+    static final class Int<T> extends FieldVarGetter<T>{
         Int(Class<T> type, Field field) {
             super(type, field);
         }
@@ -88,7 +108,7 @@ public abstract class FieldVarGetter<T> implements IVarGetter<T> {
             return int.class;
         }
     }
-    static class Long<T> extends FieldVarGetter<T>{
+    static final class Long<T> extends FieldVarGetter<T>{
         Long(Class<T> type, Field field) {
             super(type, field);
         }
@@ -101,7 +121,7 @@ public abstract class FieldVarGetter<T> implements IVarGetter<T> {
             return long.class;
         }
     }
-    static class Float<T> extends FieldVarGetter<T>{
+    static final class Float<T> extends FieldVarGetter<T>{
         Float(Class<T> type, Field field) {
             super(type, field);
         }
@@ -114,7 +134,7 @@ public abstract class FieldVarGetter<T> implements IVarGetter<T> {
             return float.class;
         }
     }
-    static class Double<T> extends FieldVarGetter<T>{
+    static final class Double<T> extends FieldVarGetter<T>{
         Double(Class<T> type, Field field) {
             super(type, field);
         }
@@ -127,7 +147,7 @@ public abstract class FieldVarGetter<T> implements IVarGetter<T> {
             return double.class;
         }
     }
-    static class Obj<T> extends FieldVarGetter<T>{
+    static final class Obj<T> extends FieldVarGetter<T>{
         final Class<?> type;
         Obj(Class<T> type, Field field) {
             super(type, field);

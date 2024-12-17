@@ -4,40 +4,96 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 
 
+/**
+ * Main class for formatting, use this to build string formater
+ * <br>
+ * It is not intended to be shared from multiple threads
+ * <br>
+ * <br>
+ * Example:
+ * <pre>{@code
+ * final MapVarProvider<User> PROVIDER = new MapVarProvider<>(User.class);
+ * ...
+ * class User{
+ *     String name; int age; User parent;
+ *
+ *     public User(String name, int age) {
+ *         this.name = name;
+ *         this.age = age;
+ *     }
+ * }
+ * ...
+ * FormatBuilder<User> builder = new FormatBuilder<>(User.class)
+ *     .setProvider(PROVIDER).fixEmpty()
+ *     .setFormat("User-%age%: %name%, parent-%parent.age%: %parent/name%");
+ *
+ * Formatter<User> format = fmBuilder.build();
+ * ...
+ * User user1 = new User("Homa"  , 1);
+ * User user2 = new User("Te4hno", 5);
+ *
+ * user1.parent = user2;
+ *
+ * System.out.println(format.get(user1)); //result: "User-1: Homa, parent-5: Te4hno"
+ * }</pre>
+ * @param <T> - input format type
+ */
 public final class FormatBuilder<T> {
     private static final IVarProvider[] EMPTY = new IVarProvider[0];
-
-    private final IdentityHashMap<Class,IVarProvider[]> cache = new IdentityHashMap<>();
-    private final HashMap<String,IVarGetter> getters = new HashMap<>();
+    //Store cached providers for current class
+    private final IdentityHashMap<Class, IVarProvider[]> cache = new IdentityHashMap<>();
+    //Store cached var getters
+    private final HashMap<String, IVarGetter> getters = new HashMap<>();
     private final Class<T> inputType;
+    //Current format class
     private Class formatClazz = Formatter.class;
+    //Current format
     private String format = "";
+    //All available providers
     private IVarProvider[] allProviders;
-    private char start = '%', end = '%', ecran = '\\';
+    //Special characters for defining text boundaries and variables
+    private char start = '%', end = '%', ignore = '\\';
     private final String nextKey = "/";
+    //Default provider, used if no providers are found
     private IVarProvider onEmpty = null;
+    //Should be fix if empty provider can`t build non-null result
     private boolean fixEmpty = false;
 
-
+    /**
+     * @param inputType format type
+     */
     public FormatBuilder(Class<T> inputType) {
         this.inputType = inputType;
     }
 
 
+    /**
+     * Set format string
+     */
     public FormatBuilder<T> setFormat(String format){
         this.format = format;
         return this;
     }
 
 
-    public FormatBuilder<T> setMath(char stat, char end, char ecran){
-        this.start = stat;
+    /**
+     * Edit special characters for find variables
+     * @param start char beginning of variable
+     * @param end char end of variable
+     * @param ignore the character that should be ignored, character following it is not special
+     */
+    public FormatBuilder<T> setMath(char start, char end, char ignore){
+        this.start = start;
         this.end = end;
-        this.ecran = ecran;
+        this.ignore = ignore;
         return this;
     }
 
 
+    /**
+     * Add providers that can be used to get vargetters
+     * @param allProviders providers to add
+     */
     public FormatBuilder<T> setProvider(IVarProvider... allProviders){
         if(this.allProviders == null){
             this.allProviders = allProviders;
@@ -51,24 +107,38 @@ public final class FormatBuilder<T> {
     }
 
 
+    /**
+     * Set provider that can be used if vargetters not founded
+     */
     public FormatBuilder<T> setOnEmpty(IVarProvider onEmpty){
         this.onEmpty = onEmpty;
         return this;
     }
 
 
+    /**
+     * Enable fix situation, when empty provider build null
+     */
     public FormatBuilder<T> fixEmpty(){
         this.fixEmpty = true;
         return this;
     }
 
 
+    /**
+     * Edit the class whose object will be created
+     * @param clazz new format class
+     */
     public <C extends Formatter<T>> FormatBuilder<T> setFormatterClass(Class<C> clazz){
         this.formatClazz = clazz;
         return this;
     }
 
 
+    /**
+     * @param clazz input type
+     * @return all providers, that can be used for this input
+     */
     private IVarProvider[] getBy(Class clazz){
         IVarProvider[] all = this.allProviders;
         if(all == null)return EMPTY;
@@ -94,6 +164,11 @@ public final class FormatBuilder<T> {
     }
 
 
+    /**
+     * @param name vargetter name
+     * @return vargetter by name
+     * @throws IllegalArgumentException if vargetter not found and empty fix not enabled
+     */
     private IVarGetter getBy(String name){
         IVarGetter result, result1;
         if((result = getters.get(name)) != null)return result;
@@ -128,6 +203,11 @@ public final class FormatBuilder<T> {
     }
 
 
+    /**
+     * Called when vargetter not founded
+     * @param name vargetter name
+     * @throws IllegalArgumentException if empty vargetter not exist and empty fix not enabled
+     */
     private IVarGetter onEmpty(String name){
         IVarProvider onEmpty;
         IVarGetter result = null;
@@ -148,9 +228,14 @@ public final class FormatBuilder<T> {
     }
 
 
+    /**
+     * Build immutable formatter
+     * @return new Formatter`s instance
+     * @throws IllegalArgumentException if format not valid
+     */
     public Formatter<T> build(){
         char[] chars = format.toCharArray();
-        char start = this.start, end = this.end, ecran = this.ecran;
+        char start = this.start, end = this.end, ignore = this.ignore;
         StringBuilder builder = new StringBuilder();
         HashMap<Key,FEntry> entries = new HashMap<>();
 
@@ -168,7 +253,7 @@ public final class FormatBuilder<T> {
                 continue;
             }
 
-            if(cur == ecran){
+            if(cur == ignore){
                 addNext = true;
                 continue;
             }
@@ -220,6 +305,7 @@ public final class FormatBuilder<T> {
             }
         }
 
+        //Fast create formatter if used default class
         if(formatClazz == Formatter.class)
             return new Formatter<>(items, itemsPos, getters, gettersPos, pos);
 
@@ -234,7 +320,7 @@ public final class FormatBuilder<T> {
     }
 
 
-    private static boolean add(HashMap<Key,FEntry> entries, int pos, String key, boolean func){
+    private static boolean add(HashMap<Key, FEntry> entries, int pos, String key, boolean func){
         Key key1 = new Key(key, func);
         FEntry entry = entries.get(key1);
         if(entry == null){
@@ -251,7 +337,7 @@ public final class FormatBuilder<T> {
     }
 
 
-    static class Key{
+    private static class Key{
         final String key;
         final boolean isFunc;
 
@@ -275,7 +361,7 @@ public final class FormatBuilder<T> {
     }
 
 
-    static class FEntry{
+    private static class FEntry{
         int[] addPositions;
         IVarGetter varGetter;
         String textValue;

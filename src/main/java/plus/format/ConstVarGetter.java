@@ -3,7 +3,12 @@ package plus.format;
 import java.util.Objects;
 
 
+/**
+ * Immutable vargetter
+ * @param <T> input type, in this case ignored
+ */
 public final class ConstVarGetter<T> implements IVarGetter<T> {
+    //immutable return`s value
     private final Object val;
 
     public ConstVarGetter(Object val) {
