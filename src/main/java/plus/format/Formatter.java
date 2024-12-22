@@ -65,4 +65,26 @@ public class Formatter <T> implements IVarGetter.Str<T>{
         //use unsafe to merge stings faster
         return UnsafeUtils.mergeStringsFast(all);
     }
+
+
+    @Override
+    public boolean isConst() {
+        for (IVarGetter<T> getter:getters)
+            if(!getter.isConst())return false;
+        return true;
+    }
+
+
+    /**
+     * Try to simplify formatter
+     * @return immutable copy or this
+     */
+    public IVarGetter<T> simplify() {
+        try {
+            return new ConstVarGetter<>(get(null));
+        } catch (Throwable e){
+            e.printStackTrace();
+            return this;
+        }
+    }
 }
